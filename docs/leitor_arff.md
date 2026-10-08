@@ -11,10 +11,17 @@ dataset = load_arff("data/classificacao/credit-g.arff")
 X, y, feature_names, class_names = to_numpy(dataset)
 ```
 
-| Retorno | credit-g | cpu_act |
+No `miami_housing`, o alvo não é o último atributo e a coluna `PARCELNO` é só um identificador, então os dois precisam ser informados:
+
+```python
+dataset = load_arff("data/regressao/miami_housing.arff")
+X, y, feature_names, _ = to_numpy(dataset, target="SALE_PRC", ignore=["PARCELNO"])
+```
+
+| Retorno | credit-g | miami_housing |
 |---|---|---|
-| `X` | matriz `(1000, 63)` de floats | matriz `(8192, 21)` de floats |
-| `y` | vetor de inteiros (`0` = good, `1` = bad) | vetor de floats (valor de `usr`) |
+| `X` | matriz `(1000, 63)` de floats | matriz `(13932, 15)` de floats |
+| `y` | vetor de inteiros (`0` = good, `1` = bad) | vetor de floats (preço de venda, `SALE_PRC`) |
 | `feature_names` | nome de cada coluna de `X` | nome de cada coluna de `X` |
 | `class_names` | `['good', 'bad']` | `None` |
 
@@ -124,7 +131,8 @@ own_telephone=yes
 
 ```bash
 source .venv/bin/activate
-python -m src.arff data/classificacao/credit-g.arff data/regressao/cpu_act.arff
+python -m src.arff data/classificacao/credit-g.arff
+python -m src.arff data/regressao/miami_housing.arff --target SALE_PRC --ignore PARCELNO
 ```
 
 ```
@@ -132,8 +140,9 @@ python -m src.arff data/classificacao/credit-g.arff data/regressao/cpu_act.arff
    amostras: 1000 | atributos originais: 20 (13 nominais) | colunas após one-hot: 63
    alvo: 'class' | classes: good=700, bad=300
    valores ausentes em X: 0
-== data/regressao/cpu_act.arff (cpu_act)
-   amostras: 8192 | atributos originais: 21 (0 nominais) | colunas após one-hot: 21
-   alvo: 'usr' | min=0.00 média=83.97 max=99.00
+== data/regressao/miami_housing.arff (x)
+   amostras: 13932 | atributos originais: 15 (0 nominais) | colunas após one-hot: 15
+   alvo: 'SALE_PRC' | min=72000.00 média=399941.93 max=2650000.00
+   ignorados: PARCELNO
    valores ausentes em X: 0
 ```
