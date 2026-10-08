@@ -6,7 +6,7 @@
 
 **Datasets:**
 - Classificação: `credit-g` (OpenML 31).
-- Regressão: `cpu_act` (OpenML 197).
+- Regressão: `miami_housing` (OpenML 44983). Alvo `SALE_PRC`; ignorar a coluna `PARCELNO` (identificador).
 
 **Já pronto:** leitor ARFF (`src/arff.py`), documentado em [`leitor_arff.md`](leitor_arff.md).
 
@@ -149,7 +149,7 @@ src/
 | Bayesiano Univariado | | | | | | |
 | Bayesiano Multivariado | | | | | | |
 
-**Regressão (cpu_act)**
+**Regressão (miami_housing)**
 
 | Regressor | MAE | R² | R² Ajustado | Tempo Treino (s) | Tempo Teste (s) |
 |---|---|---|---|---|---|
