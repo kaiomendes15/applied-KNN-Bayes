@@ -163,10 +163,11 @@ def load_arff(path):
     return ArffDataset(relation, attributes, rows)
 
 
-def to_numpy(dataset, target=None, drop_first=False):
+def to_numpy(dataset, target=None, drop_first=False, ignore=()):
     """Converte um `ArffDataset` em (X, y, feature_names, class_names).
 
     - target: nome do atributo alvo (padrão: o último atributo).
+    - ignore: nomes de atributos que ficam fora de X (identificadores, por exemplo).
     - Atributos numéricos viram uma coluna float (ausentes viram np.nan).
     - Atributos nominais viram colunas one-hot "atributo=categoria". As categorias
       vêm do cabeçalho, então a codificação é a mesma em qualquer fold, sem vazamento.
@@ -178,10 +179,11 @@ def to_numpy(dataset, target=None, drop_first=False):
     """
     target_idx = dataset.attribute_index(target) if target else len(dataset.attributes) - 1
     target_attr = dataset.attributes[target_idx]
+    ignored = {dataset.attribute_index(name) for name in ignore}
 
     columns, feature_names = [], []
     for j, attr in enumerate(dataset.attributes):
-        if j == target_idx:
+        if j == target_idx or j in ignored:
             continue
         values = [row[j] for row in dataset.rows]
 
@@ -215,19 +217,30 @@ def to_numpy(dataset, target=None, drop_first=False):
 
 
 if __name__ == "__main__":
-    import sys
+    import argparse
 
-    for path in sys.argv[1:]:
+    parser = argparse.ArgumentParser(description="Resumo de arquivos ARFF.")
+    parser.add_argument("paths", nargs="+")
+    parser.add_argument("--target", help="atributo alvo (padrão: o último)")
+    parser.add_argument("--ignore", default="", help="atributos a ignorar, separados por vírgula")
+    args = parser.parse_args()
+    ignore = [name for name in args.ignore.split(",") if name]
+
+    for path in args.paths:
         ds = load_arff(path)
-        X, y, names, classes = to_numpy(ds)
-        n_nominal = sum(a.is_nominal for a in ds.attributes[:-1])
+        X, y, names, classes = to_numpy(ds, target=args.target, ignore=ignore)
+        target_name = args.target or ds.attributes[-1].name
+        predictors = [a for a in ds.attributes if a.name != target_name and a.name not in ignore]
+        n_nominal = sum(a.is_nominal for a in predictors)
         print(f"== {path} ({ds.relation})")
-        print(f"   amostras: {X.shape[0]} | atributos originais: {len(ds.attributes) - 1} "
+        print(f"   amostras: {X.shape[0]} | atributos originais: {len(predictors)} "
               f"({n_nominal} nominais) | colunas após one-hot: {X.shape[1]}")
-        print(f"   alvo: '{ds.attributes[-1].name}'", end="")
+        print(f"   alvo: '{target_name}'", end="")
         if classes:
             counts = np.bincount(y, minlength=len(classes))
             print(" | classes: " + ", ".join(f"{c}={k}" for c, k in zip(classes, counts)))
         else:
             print(f" | min={y.min():.2f} média={y.mean():.2f} max={y.max():.2f}")
+        if ignore:
+            print(f"   ignorados: {', '.join(ignore)}")
         print(f"   valores ausentes em X: {int(np.isnan(X).sum())}")
